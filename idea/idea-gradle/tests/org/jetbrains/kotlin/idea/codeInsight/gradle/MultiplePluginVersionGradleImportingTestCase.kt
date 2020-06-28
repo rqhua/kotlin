@@ -61,7 +61,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : GradleImportingTes
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}")
         fun data(): Collection<Array<Any>> {
-            return AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS.flatMap { gradleVersion ->
+            //TODO(auskov): remove extending list of gradle versions when tested version are advanced
+            return (AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS + arrayOf("6.5")).flatMap { gradleVersion ->
                 KOTLIN_GRADLE_PLUGIN_VERSIONS.map { kotlinVersion ->
                     arrayOf<Any>(
                         gradleVersion[0],
@@ -75,21 +76,11 @@ abstract class MultiplePluginVersionGradleImportingTestCase : GradleImportingTes
     fun repositories(useKts: Boolean): String {
         val customRepositories = arrayOf("https://dl.bintray.com/kotlin/kotlin-dev", "http://dl.bintray.com/kotlin/kotlin-eap")
         val customMavenRepositories = customRepositories.map { if (useKts) "maven(\"$it\")" else "maven { url '$it' } " }.joinToString("\n")
-        val baseFolder = File(".").absolutePath.replace("\\", "/")
-        val quote = if (useKts) '"' else '\''
-        val flatDirRepositories = if (useMaster)
-            flatDirs.map { "$quote$baseFolder/$it$quote" }.joinToString(
-                ",\n",
-                if (useKts) "flatDir { dirs(" else "flatDir { dirs ",
-                if (useKts) ")}" else "}"
-            )
-        else
-            ""
         return """
+            mavenLocal()
             google()
             jcenter()
             $customMavenRepositories
-            $flatDirRepositories
         """.trimIndent()
     }
 
