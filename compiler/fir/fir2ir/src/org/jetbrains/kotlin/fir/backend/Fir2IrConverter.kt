@@ -159,7 +159,7 @@ class Fir2IrConverter(
                 null
             }
             else -> {
-                throw AssertionError("Unexpected member: ${declaration::class}")
+                error("Unexpected member: ${declaration::class}")
             }
         }
     }
