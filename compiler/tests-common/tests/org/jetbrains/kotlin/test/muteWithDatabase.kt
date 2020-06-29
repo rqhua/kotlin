@@ -29,7 +29,16 @@ private fun isMutedInDatabase(testClass: Class<*>, methodKey: String): Boolean {
     return mutedTest != null && (if (SKIP_MUTED_TESTS) !mutedTest.hasFailFile else mutedTest.isFlaky)
 }
 
-private fun getMutedTest(testCase: TestCase): MutedTest? {
+private fun isMutedInDatabaseWithLog(testClass: Class<*>, methodKey: String): Boolean {
+    return if (isMutedInDatabase(testClass, methodKey)) {
+        System.err.println(mutedMessage(testKey(testClass, methodKey)))
+        true
+    } else {
+        false
+    }
+}
+
+fun getMutedTest(testCase: TestCase): MutedTest? {
     return getMutedTest(testCase.javaClass, testCase.name)
 }
 
@@ -142,35 +151,10 @@ private inline fun RunNotifier.withMuteFailureListener(
     }
 }
 
-fun isIgnoredInDatabaseWithLog(child: FrameworkMethod): Boolean {
-    if (isMutedInDatabase(child.declaringClass, child.name)) {
-        System.err.println(mutedMessage(testKey(child.declaringClass, child.name)))
-        return true
-    }
-    return false
-}
-
-fun isIgnoredInDatabaseWithLog(child: FrameworkMethod, parametersName: String): Boolean {
-    if (isIgnoredInDatabaseWithLog(child)) {
-        return true
-    }
-
+private fun isIgnoredInDatabaseWithLog(child: FrameworkMethod, parametersName: String): Boolean {
     val methodWithParametersKey = parametrizedMethodKey(child, parametersName)
-    if (isMutedInDatabase(child.declaringClass, methodWithParametersKey)) {
-        System.err.println(mutedMessage(testKey(child.declaringClass, methodWithParametersKey)))
-        return true
-    }
 
-    return false
-}
-
-fun isIgnoredInDatabaseWithLog(testCase: TestCase): Boolean {
-    if (isMutedInDatabase(testCase)) {
-        System.err.println(mutedMessage(testKey(testCase)))
-        return true
-    }
-
-    return false
+    return isMutedInDatabaseWithLog(child.declaringClass, child.name) || isMutedInDatabase(child.declaringClass, methodWithParametersKey)
 }
 
 fun TestCase.runTest(test: () -> Unit) {
