@@ -192,6 +192,7 @@ if (!project.hasProperty("versions.kotlin-native")) {
 val intellijUltimateEnabled by extra(project.kotlinBuildProperties.intellijUltimateEnabled)
 val effectSystemEnabled by extra(project.getBooleanProperty("kotlin.compiler.effectSystemEnabled") ?: false)
 val newInferenceEnabled by extra(project.getBooleanProperty("kotlin.compiler.newInferenceEnabled") ?: false)
+val useJvmIrBackend by extra(project.getBooleanProperty("kotlin.build.useIR") ?: false)
 
 val intellijSeparateSdks = project.getBooleanProperty("intellijSeparateSdks") ?: false
 
@@ -425,6 +426,10 @@ allprojects {
     tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile> {
         kotlinOptions {
             freeCompilerArgs = commonCompilerArgs + jvmCompilerArgs
+
+            if (useJvmIrBackend) {
+                useIR = true
+            }
         }
     }
 
