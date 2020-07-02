@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.resolve.calls.components
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionTypeOrSubtype
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.ExpectedTypeConstraint
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.tower.forceResolution
 import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.UnwrappedType
 import org.jetbrains.kotlin.types.model.safeSubstitute
@@ -284,10 +286,18 @@ class KotlinCallCompleter(
                 return
             }
 
-            expectedType === TypeUtils.UNIT_EXPECTED_TYPE ->
-                csBuilder.addSubtypeConstraintIfCompatible(
-                    returnType, csBuilder.builtIns.unitType, ExpectedTypeConstraintPosition(resolvedCall.atom)
-                )
+            expectedType === TypeUtils.UNIT_EXPECTED_TYPE -> {
+                val position = ExpectedTypeConstraintPosition(resolvedCall.atom)
+                with(csBuilder) {
+                    runTransaction {
+                        if (!hasContradiction) {
+                            addSubtypeConstraint(returnType, csBuilder.builtIns.unitType, position)
+                            addSubtypeConstraint(csBuilder.builtIns.unitType, returnType, position)
+                        }
+                        !hasContradiction
+                    }
+                }
+            }
 
             else ->
                 csBuilder.addSubtypeConstraint(returnType, expectedType, ExpectedTypeConstraintPosition(resolvedCall.atom))
