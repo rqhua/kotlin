@@ -64,7 +64,11 @@ class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
     override fun createRunnerForTestWithParameters(testWithParameters: TestWithParameters?): Runner {
         return object : BlockJUnit4ClassRunnerWithParameters(testWithParameters) {
             override fun isIgnored(child: FrameworkMethod): Boolean {
-                return super.isIgnored(child) || isIgnoredInDatabaseWithLog(child, name)
+                val methodWithParametersKey = parametrizedMethodKey(child, name)
+
+                return super.isIgnored(child)
+                        || isMutedInDatabaseWithLog(child.declaringClass, child.name)
+                        || isMutedInDatabaseWithLog(child.declaringClass, methodWithParametersKey)
             }
 
             override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
@@ -109,13 +113,6 @@ private fun invertMutedTestResultWithLog(f: () -> Unit, testKey: String) {
 }
 
 private fun parametrizedMethodKey(child: FrameworkMethod, parametersName: String) = "${child.method.name}$parametersName"
-
-private fun isIgnoredInDatabaseWithLog(child: FrameworkMethod, parametersName: String): Boolean {
-    val methodWithParametersKey = parametrizedMethodKey(child, parametersName)
-
-    return isMutedInDatabaseWithLog(child.declaringClass, child.name)
-            || isMutedInDatabaseWithLog(child.declaringClass, methodWithParametersKey)
-}
 
 fun TestCase.runTest(test: () -> Unit) {
     wrapWithMuteInDatabase(this, test).invoke()
