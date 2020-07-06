@@ -33,4 +33,6 @@ class FirNestedClassifierScope(val klass: FirClass<*>) : FirScope() {
         val matchedClass = classIndex[name] ?: return
         processor(matchedClass, ConeSubstitutor.Empty)
     }
+
+    fun getClassifierByName(name: Name): FirRegularClassSymbol? = classIndex[name]
 }

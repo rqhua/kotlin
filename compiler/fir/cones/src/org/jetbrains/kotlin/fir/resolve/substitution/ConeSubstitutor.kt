@@ -20,8 +20,10 @@ abstract class ConeSubstitutor : TypeSubstitutorMarker {
         override fun substituteOrNull(type: ConeKotlinType): ConeKotlinType? {
             return null
         }
-
     }
+
+    val isEmpty: Boolean
+        get() = this == Empty
 }
 
 fun ConeSubstitutor.substituteOrNull(type: ConeKotlinType?): ConeKotlinType? {

@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.bindSymbolToLookupTag
 import org.jetbrains.kotlin.fir.resolve.providers.getSymbolByTypeRef
 import org.jetbrains.kotlin.fir.resolve.substitution.AbstractConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.scopes.impl.FirDeclaredMemberScopeProvider
 import org.jetbrains.kotlin.fir.scopes.impl.withReplacedConeType
@@ -195,15 +196,30 @@ fun FirClassifierSymbol<*>.constructType(
     parts: List<FirQualifierPart>,
     isNullable: Boolean,
     symbolOriginSession: FirSession,
-    attributes: ConeAttributes = ConeAttributes.Empty
-): ConeKotlinType =
-    constructType(parts.toTypeProjections(), isNullable, attributes)
+    attributes: ConeAttributes = ConeAttributes.Empty,
+    substitutor: ConeSubstitutor? = null
+): ConeKotlinType {
+    var typeArguments = parts.toTypeProjections()
+    if (this is FirRegularClassSymbol) {
+        if (typeArguments.size != fir.typeParameters.size) {
+            @Suppress("NAME_SHADOWING")
+            val substitutor = substitutor ?: ConeSubstitutor.Empty
+            val n = fir.typeParameters.size - typeArguments.size
+            val argumentsFromOuterClassesAndParents = fir.typeParameters.map {
+                val type = ConeTypeParameterTypeImpl(ConeTypeParameterLookupTag(it.symbol), isNullable = false)
+                substitutor.substituteOrSelf(type)
+            }.toTypedArray<ConeTypeProjection>()
+            typeArguments = argumentsFromOuterClassesAndParents + typeArguments
+        }
+    }
+    return constructType(typeArguments, isNullable, attributes)
         .also {
             val lookupTag = it.lookupTag
             if (lookupTag is ConeClassLikeLookupTagImpl && this is FirClassLikeSymbol<*>) {
                 lookupTag.bindSymbolToLookupTag(symbolOriginSession.firSymbolProvider, this)
             }
         }
+}
 
 private fun List<FirQualifierPart>.toTypeProjections(): Array<ConeTypeProjection> =
     asReversed().flatMap { it.typeArguments.map { typeArgument -> typeArgument.toConeTypeProjection() } }.toTypedArray()
