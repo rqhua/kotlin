@@ -78,7 +78,7 @@ class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
             }
 
             override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
-                notifier.withMuteFailureListener(method.declaringClass, parametrizedMethodKey(method, name)) {
+                notifier.withAutoMuteListener(method.declaringClass, parametrizedMethodKey(method, name)) {
                     super.runChild(method, notifier)
                 }
             }
@@ -110,6 +110,7 @@ private fun invertMutedTestResultWithLog(f: () -> Unit, testKey: String) {
         println("MUTED TEST STILL FAILS: $testKey")
         isTestGreen = false
     }
+
     if (isTestGreen) {
         System.err.println("SUCCESS RESULT OF MUTED TEST: $testKey")
         throw Exception("Muted non-flaky test $testKey finished successfully. Please remove it from csv file")
@@ -120,29 +121,28 @@ private fun parametrizedMethodKey(child: FrameworkMethod, parametersName: String
     return child.method.name + parametersName
 }
 
-private inline fun RunNotifier.withMuteFailureListener(
+private inline fun RunNotifier.withAutoMuteListener(
     declaredClass: Class<*>,
     methodKey: String,
     crossinline run: () -> Unit,
 ) {
     val doAutoMute = DO_AUTO_MUTE
-    if (doAutoMute == null) {
-        run()
-        return
-    }
-
-    val muteFailureListener = object : RunListener() {
-        override fun testFailure(failure: Failure) {
-            doAutoMute.muteTest(testKey(declaredClass, methodKey))
-            super.testFailure(failure)
+    if (doAutoMute != null) {
+        val autoMuteListener = object : RunListener() {
+            override fun testFailure(failure: Failure) {
+                doAutoMute.muteTest(testKey(declaredClass, methodKey))
+                super.testFailure(failure)
+            }
         }
-    }
 
-    try {
-        addListener(muteFailureListener)
+        try {
+            addListener(autoMuteListener)
+            run()
+        } finally {
+            removeListener(autoMuteListener)
+        }
+    } else {
         run()
-    } finally {
-        removeListener(muteFailureListener)
     }
 }
 
