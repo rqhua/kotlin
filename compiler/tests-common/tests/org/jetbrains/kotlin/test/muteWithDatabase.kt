@@ -24,7 +24,7 @@ private fun mutedMessage(klass: Class<*>, methodKey: String) = "MUTED TEST: ${te
 
 private fun isMutedInDatabase(testClass: Class<*>, methodKey: String): Boolean {
     val mutedTest = mutedSet.mutedTest(testClass, methodKey)
-    return mutedTest != null && (if (SKIP_MUTED_TESTS) !mutedTest.hasFailFile else mutedTest.isFlaky)
+    return SKIP_MUTED_TESTS && isPresentedInDatabaseWithoutFailMarker(mutedTest)
 }
 
 private fun isMutedInDatabaseWithLog(testClass: Class<*>, methodKey: String): Boolean {
@@ -52,8 +52,12 @@ internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> U
             System.err.println(mutedMessage(testClass, methodKey))
         }
     } else if (isPresentedInDatabaseWithoutFailMarker(mutedTest)) {
-        return {
-            invertMutedTestResultWithLog(f, testKey)
+        if (mutedTest?.isFlaky == true) {
+            return f
+        } else {
+            return {
+                invertMutedTestResultWithLog(f, testKey)
+            }
         }
     } else {
         return wrapWithAutoMute(f, testKey)
@@ -85,9 +89,14 @@ class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
                         val methodKey = parametrizedMethodKey(method, name)
                         val mutedTest = getMutedTest(methodClass, methodKey) ?: getMutedTest(methodClass, method.method.name)
                         if (isPresentedInDatabaseWithoutFailMarker(mutedTest)) {
-                            val testKey = testKey(methodClass, methodKey)
-                            invertMutedTestResultWithLog({ super.evaluate() }, testKey)
-                            return
+                            if (mutedTest?.isFlaky == true) {
+                                super.evaluate()
+                                return
+                            } else {
+                                val testKey = testKey(methodClass, methodKey)
+                                invertMutedTestResultWithLog({ super.evaluate() }, testKey)
+                                return
+                            }
                         }
                         super.evaluate()
                     }
