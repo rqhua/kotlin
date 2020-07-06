@@ -14,7 +14,9 @@ class ${moduleName}Tests: XCTestCase {
     func testExample() {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
+#if($useTests)
         XCTAssert(greet().contains("Hello"), "Should say Hello")
+#end
     }
 
     func testPerformanceExample() {

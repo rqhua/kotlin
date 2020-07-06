@@ -27,6 +27,8 @@ object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator, M
     override val greyText = KotlinNewProjectWizardBundle.message("module.configurator.ios.requires.xcode")
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.ios")
 
+    var useTests: Boolean = false
+
 
     override val needCreateBuildFile: Boolean = false
     override val requiresRootBuildFile: Boolean = true
@@ -74,10 +76,16 @@ object IOSSinglePlatformModuleConfigurator : SinglePlatformModuleConfigurator, M
             dependentModule.reference.notRequiredSettingValue?.module
         }
 
-        return mapOf(
+        val context = mutableMapOf(
             "moduleName" to module.name,
             "sharedModuleName" to dependentModule?.name
         )
+
+        if (useTests) {
+            context["useTests"] = "1"
+        }
+
+        return context
     }
 
     private fun descriptor(path: Path, moduleName: String) =

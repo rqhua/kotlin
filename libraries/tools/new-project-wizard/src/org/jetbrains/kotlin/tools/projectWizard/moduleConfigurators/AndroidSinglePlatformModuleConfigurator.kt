@@ -29,6 +29,8 @@ object AndroidSinglePlatformModuleConfigurator :
     AndroidModuleConfigurator {
     override val moduleKind: ModuleKind get() = ModuleKind.singleplatformAndroid
 
+    var useTests: Boolean = false
+
     @NonNls
     override val id = "android"
 
@@ -108,13 +110,22 @@ object AndroidSinglePlatformModuleConfigurator :
             "sharedPackage" to sharedPackage?.asCodePackage()
         )
 
+        if (useTests) {
+            TemplatesPlugin::addFileTemplate.execute(
+                FileTemplate(
+                    AndroidModuleConfigurator.FileTemplateDescriptors.greetingTestKt(
+                        javaPackage
+                    ), modulePath, settings
+                )
+            )
+        }
+
         TemplatesPlugin::addFileTemplates.execute(
             listOf(
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.activityMainXml, modulePath, settings),
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.androidManifestXml, modulePath, settings),
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.colorsXml, modulePath, settings),
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.stylesXml, modulePath, settings),
-                FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.greetingTestKt(javaPackage), modulePath, settings),
                 FileTemplate(AndroidModuleConfigurator.FileTemplateDescriptors.mainActivityKt(javaPackage), modulePath, settings)
             )
         )
