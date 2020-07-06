@@ -108,9 +108,7 @@ private fun invertMutedTestResultWithLog(f: () -> Unit, testKey: String) {
     }
 }
 
-private fun parametrizedMethodKey(child: FrameworkMethod, parametersName: String): String {
-    return child.method.name + parametersName
-}
+private fun parametrizedMethodKey(child: FrameworkMethod, parametersName: String) = "${child.method.name}$parametersName"
 
 private fun isIgnoredInDatabaseWithLog(child: FrameworkMethod, parametersName: String): Boolean {
     val methodWithParametersKey = parametrizedMethodKey(child, parametersName)
