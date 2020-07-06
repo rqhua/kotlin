@@ -9,8 +9,6 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.test.mutes.*
 import org.junit.internal.runners.statements.InvokeMethod
 import org.junit.runner.Runner
-import org.junit.runner.notification.Failure
-import org.junit.runner.notification.RunListener
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.model.FrameworkMethod
 import org.junit.runners.model.Statement
@@ -19,6 +17,12 @@ import org.junit.runners.parameterized.ParametersRunnerFactory
 import org.junit.runners.parameterized.TestWithParameters
 
 private val SKIP_MUTED_TESTS = java.lang.Boolean.getBoolean("org.jetbrains.kotlin.skip.muted.tests")
+
+private fun testKey(klass: Class<*>, methodKey: String) = "${klass.canonicalName}.$methodKey"
+private fun testKey(testCase: TestCase) = testKey(testCase::class.java, testCase.name)
+
+private fun mutedMessage(klass: Class<*>, methodKey: String) = "MUTED TEST: ${testKey(klass, methodKey)}"
+private fun mutedMessage(testCase: TestCase) = mutedMessage(testCase::class.java, testCase.name)
 
 private fun isMutedInDatabase(testClass: Class<*>, methodKey: String): Boolean {
     val mutedTest = mutedSet.mutedTest(testClass, methodKey)
@@ -64,12 +68,6 @@ internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> U
     }
 }
 
-private fun testKey(klass: Class<*>, methodKey: String) = "${klass.canonicalName}.$methodKey"
-private fun testKey(testCase: TestCase) = testKey(testCase::class.java, testCase.name)
-
-private fun mutedMessage(klass: Class<*>, methodKey: String) = "MUTED TEST: ${testKey(klass, methodKey)}"
-private fun mutedMessage(testCase: TestCase) = mutedMessage(testCase::class.java, testCase.name)
-
 class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
     override fun createRunnerForTestWithParameters(testWithParameters: TestWithParameters?): Runner {
         return object : BlockJUnit4ClassRunnerWithParameters(testWithParameters) {
@@ -78,7 +76,8 @@ class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
             }
 
             override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
-                notifier.withAutoMuteListener(method.declaringClass, parametrizedMethodKey(method, name)) {
+                val testKey = testKey(method.declaringClass, parametrizedMethodKey(method, name))
+                notifier.withAutoMuteListener(testKey) {
                     super.runChild(method, notifier)
                 }
             }
@@ -119,31 +118,6 @@ private fun invertMutedTestResultWithLog(f: () -> Unit, testKey: String) {
 
 private fun parametrizedMethodKey(child: FrameworkMethod, parametersName: String): String {
     return child.method.name + parametersName
-}
-
-private inline fun RunNotifier.withAutoMuteListener(
-    declaredClass: Class<*>,
-    methodKey: String,
-    crossinline run: () -> Unit,
-) {
-    val doAutoMute = DO_AUTO_MUTE
-    if (doAutoMute != null) {
-        val autoMuteListener = object : RunListener() {
-            override fun testFailure(failure: Failure) {
-                doAutoMute.muteTest(testKey(declaredClass, methodKey))
-                super.testFailure(failure)
-            }
-        }
-
-        try {
-            addListener(autoMuteListener)
-            run()
-        } finally {
-            removeListener(autoMuteListener)
-        }
-    } else {
-        run()
-    }
 }
 
 private fun isIgnoredInDatabaseWithLog(child: FrameworkMethod, parametersName: String): Boolean {
