@@ -22,10 +22,11 @@ import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
-import org.jetbrains.kotlin.fir.resolve.calls.ImplicitDispatchReceiverValue
+import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.calls.candidate
-import org.jetbrains.kotlin.fir.resolve.calls.mapArguments
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
+import org.jetbrains.kotlin.fir.resolve.inference.FirInferenceSession
+import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
 import org.jetbrains.kotlin.fir.resolve.transformers.InvocationKindTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.StoreReceiver
 import org.jetbrains.kotlin.fir.resolve.transformers.firClassLike
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.fir.types.builder.*
 import org.jetbrains.kotlin.fir.visitors.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
 import org.jetbrains.kotlin.types.Variance
 
 open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransformer) : FirPartialBodyResolveTransformer(transformer) {
@@ -199,6 +201,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             storeTypeFromCallee(functionCall)
         }
         if (functionCall.calleeReference !is FirSimpleNamedReference) return functionCall.compose()
+        if (functionCall.calleeReference is FirNamedReferenceWithCandidate) return functionCall.compose()
         dataFlowAnalyzer.enterCall()
         functionCall.annotations.forEach { it.accept(this, data) }
         functionCall.transform<FirFunctionCall, Nothing?>(InvocationKindTransformer, null)
@@ -302,9 +305,10 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             require(operatorCall.operation != FirOperation.ASSIGN)
 
             operatorCall.annotations.forEach { it.accept(this, data) }
+            var (leftArgument, rightArgument) = operatorCall.arguments
             @Suppress("NAME_SHADOWING")
-            operatorCall.argumentList.transformArguments(this, ResolutionMode.ContextIndependent)
-            val (leftArgument, rightArgument) = operatorCall.arguments
+            leftArgument = leftArgument.transformSingle(transformer, ResolutionMode.ContextIndependent)
+            rightArgument = rightArgument.transformSingle(transformer, ResolutionMode.ContextDependent)
 
             fun createFunctionCall(name: Name) = buildFunctionCall {
                 source = operatorCall.source?.withKind(FirFakeSourceElementKind.DesugaredCompoundAssignment)
@@ -317,24 +321,35 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                 }
             }
 
-            // TODO: disable DataFlowAnalyzer for resolving that two calls
             // x.plusAssign(y)
             val assignmentOperatorName = FirOperationNameConventions.ASSIGNMENTS.getValue(operatorCall.operation)
             val assignOperatorCall = createFunctionCall(assignmentOperatorName)
-            val resolvedAssignCall = assignOperatorCall.transformSingle(this, ResolutionMode.ContextIndependent)
-            val assignCallReference = resolvedAssignCall.toResolvedCallableReference()
-            val assignIsError = resolvedAssignCall.typeRef is FirErrorTypeRef
+            val resolvedAssignCall = resolveCandidateForAssignmentOperatorCall {
+                assignOperatorCall.transformSingle(this, ResolutionMode.ContextDependent)
+            }
+            val assignCallReference = resolvedAssignCall.calleeReference as? FirNamedReferenceWithCandidate
+            val assignIsError = assignCallReference?.isError ?: true
             // x = x + y
             val simpleOperatorName = FirOperationNameConventions.ASSIGNMENTS_TO_SIMPLE_OPERATOR.getValue(operatorCall.operation)
             val simpleOperatorCall = createFunctionCall(simpleOperatorName)
-            val resolvedOperatorCall = simpleOperatorCall.transformSingle(this, ResolutionMode.ContextIndependent)
-            val operatorCallReference = resolvedOperatorCall.toResolvedCallableReference()
+            val resolvedOperatorCall = resolveCandidateForAssignmentOperatorCall {
+                simpleOperatorCall.transformSingle(this, ResolutionMode.ContextDependent)
+            }
+            val operatorCallReference = resolvedOperatorCall.calleeReference as? FirNamedReferenceWithCandidate
+            val operatorIsError = operatorCallReference?.isError ?: true
 
             val lhsReference = leftArgument.toResolvedCallableReference()
-            val lhsIsVar = (lhsReference?.resolvedSymbol as? FirVariableSymbol<*>)?.fir?.isVar == true
+            val lhsVariable = (lhsReference?.resolvedSymbol as? FirVariableSymbol<*>)?.fir
+            val lhsIsVar = lhsVariable?.isVar == true
             return when {
-                operatorCallReference == null || (!lhsIsVar && !assignIsError) -> resolvedAssignCall.compose()
-                assignCallReference == null -> {
+                operatorIsError || (!lhsIsVar && !assignIsError) -> {
+                    callCompleter.completeCall(resolvedAssignCall, noExpectedType)
+                    dataFlowAnalyzer.exitFunctionCall(resolvedAssignCall, callCompleted = true)
+                    resolvedAssignCall.compose()
+                }
+                assignIsError -> {
+                    callCompleter.completeCall(resolvedOperatorCall, lhsVariable?.returnTypeRef ?: noExpectedType)
+                    dataFlowAnalyzer.exitFunctionCall(resolvedOperatorCall, callCompleted = true)
                     val assignment =
                         buildVariableAssignment {
                             source = operatorCall.source
@@ -353,15 +368,42 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                         }
                     assignment.transform(transformer, ResolutionMode.ContextIndependent)
                 }
-                else -> buildErrorExpression {
-                    source = operatorCall.source
-                    diagnostic =
-                        ConeOperatorAmbiguityError(listOf(operatorCallReference.resolvedSymbol, assignCallReference.resolvedSymbol))
-                }.compose()
+                else -> {
+                    @Suppress("CAST_NEVER_SUCCEEDS")
+                    val operatorCallSymbol = operatorCallReference?.candidateSymbol
+                        ?: (operatorCallReference as? FirResolvedNamedReference)?.resolvedSymbol
+
+                    @Suppress("CAST_NEVER_SUCCEEDS")
+                    val assignmentCallSymbol = assignCallReference?.candidateSymbol
+                        ?: (assignCallReference as? FirResolvedNamedReference)?.resolvedSymbol
+
+                    requireNotNull(operatorCallSymbol)
+                    requireNotNull(assignmentCallSymbol)
+
+                    buildErrorExpression {
+                        source = operatorCall.source
+                        diagnostic =
+                            ConeOperatorAmbiguityError(listOf(operatorCallSymbol, assignmentCallSymbol))
+                    }.compose()
+                }
             }
         }
 
         throw IllegalArgumentException(operatorCall.render())
+    }
+
+    private inline fun <T> resolveCandidateForAssignmentOperatorCall(block: () -> T): T {
+        return dataFlowAnalyzer.withIgnoreFunctionCalls {
+            callResolver.withNoArgumentsTransform {
+                inferenceComponents.withInferenceSession(InferenceSessionForAssignmentOperatorCall) {
+                    block()
+                }
+            }
+        }
+    }
+
+    private object InferenceSessionForAssignmentOperatorCall : FirInferenceSession.Dummy() {
+        override fun <T> shouldRunCompletion(call: T): Boolean where T : FirStatement, T : FirResolvable = false
     }
 
     private fun FirTypeRef.withTypeArgumentsForBareType(argument: FirExpression): FirTypeRef {

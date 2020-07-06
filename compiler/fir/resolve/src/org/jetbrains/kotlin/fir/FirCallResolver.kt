@@ -58,14 +58,22 @@ class FirCallResolver(
         inferenceComponents.session.callConflictResolverFactory
             .create(TypeSpecificityComparator.NONE, inferenceComponents)
 
+    @PrivateForInline
+    var noArgumentsTransform: Boolean = false
+
+    @OptIn(PrivateForInline::class)
     fun resolveCallAndSelectCandidate(functionCall: FirFunctionCall): FirFunctionCall {
         qualifiedResolver.reset()
         @Suppress("NAME_SHADOWING")
-        val functionCall = functionCall.transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent)
-            .also {
-                dataFlowAnalyzer.enterQualifiedAccessExpression()
-                functionCall.argumentList.transformArguments(transformer, ResolutionMode.ContextDependent)
-            }
+        val functionCall = if (!noArgumentsTransform) {
+            functionCall.transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent)
+                .also {
+                    dataFlowAnalyzer.enterQualifiedAccessExpression()
+                    functionCall.argumentList.transformArguments(transformer, ResolutionMode.ContextDependent)
+                }
+        } else {
+            functionCall
+        }
 
         val name = functionCall.calleeReference.name
         val result = collectCandidates(functionCall, name)
@@ -287,6 +295,17 @@ class FirCallResolver(
         )
 
         return callResolver.selectDelegatingConstructorCall(delegatedConstructorCall, name, result, callInfo)
+    }
+
+    @OptIn(PrivateForInline::class)
+    inline fun <T> withNoArgumentsTransform(block: () -> T): T {
+        val oldValue = noArgumentsTransform
+        noArgumentsTransform = true
+        return try {
+            block()
+        } finally {
+            noArgumentsTransform = oldValue
+        }
     }
 
     private fun selectDelegatingConstructorCall(
