@@ -156,6 +156,12 @@ object AndroidTargetConfigurator : TargetConfigurator,
     override fun createModuleIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module): List<BuildSystemIR> =
         buildList {
             +ArtifactBasedLibraryDependencyIR(
+                MavenArtifact(DefaultRepository.MAVEN_CENTRAL, "com.jaredrummler", "android-device-names"),
+                version = Versions.ANDROID.DEVICE_NAMES,
+                dependencyType = DependencyType.MAIN
+            )
+
+            +ArtifactBasedLibraryDependencyIR(
                 MavenArtifact(DefaultRepository.MAVEN_CENTRAL, "junit", "junit"),
                 version = Versions.JUNIT,
                 dependencyType = DependencyType.TEST
