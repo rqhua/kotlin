@@ -36,6 +36,10 @@ private fun isMutedInDatabaseWithLog(testClass: Class<*>, methodKey: String): Bo
     return mutedInDatabase
 }
 
+private fun isPresentedInDatabaseWithoutFailMarker(mutedTest: MutedTest?): Boolean {
+    return mutedTest != null && !mutedTest.hasFailFile
+}
+
 internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> Unit) {
     val testClass = testCase.javaClass
     val methodKey = testCase.name
@@ -47,7 +51,7 @@ internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> U
         return {
             System.err.println(mutedMessage(testClass, methodKey))
         }
-    } else if (mutedTest != null && !mutedTest.hasFailFile) {
+    } else if (isPresentedInDatabaseWithoutFailMarker(mutedTest)) {
         return {
             invertMutedTestResultWithLog(f, testKey)
         }
@@ -80,7 +84,7 @@ class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
                         val methodClass = method.declaringClass
                         val methodKey = parametrizedMethodKey(method, name)
                         val mutedTest = getMutedTest(methodClass, methodKey) ?: getMutedTest(methodClass, method.method.name)
-                        if (mutedTest != null && !mutedTest.hasFailFile) {
+                        if (isPresentedInDatabaseWithoutFailMarker(mutedTest)) {
                             val testKey = testKey(methodClass, methodKey)
                             invertMutedTestResultWithLog({ super.evaluate() }, testKey)
                             return
