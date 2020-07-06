@@ -19,39 +19,35 @@ import org.junit.runners.parameterized.TestWithParameters
 private val SKIP_MUTED_TESTS = java.lang.Boolean.getBoolean("org.jetbrains.kotlin.skip.muted.tests")
 
 private fun testKey(klass: Class<*>, methodKey: String) = "${klass.canonicalName}.$methodKey"
-private fun testKey(testCase: TestCase) = testKey(testCase::class.java, testCase.name)
 
 private fun mutedMessage(klass: Class<*>, methodKey: String) = "MUTED TEST: ${testKey(klass, methodKey)}"
-private fun mutedMessage(testCase: TestCase) = mutedMessage(testCase::class.java, testCase.name)
 
 private fun isMutedInDatabase(testClass: Class<*>, methodKey: String): Boolean {
     val mutedTest = mutedSet.mutedTest(testClass, methodKey)
     return mutedTest != null && (if (SKIP_MUTED_TESTS) !mutedTest.hasFailFile else mutedTest.isFlaky)
 }
 
-private fun isMutedInDatabase(testCase: TestCase): Boolean {
-    return isMutedInDatabase(testCase.javaClass, testCase.name)
-}
-
 private fun isMutedInDatabaseWithLog(testClass: Class<*>, methodKey: String): Boolean {
-    return if (isMutedInDatabase(testClass, methodKey)) {
+    val mutedInDatabase = isMutedInDatabase(testClass, methodKey)
+
+    if (mutedInDatabase)
         System.err.println(mutedMessage(testClass, methodKey))
-        true
-    } else {
-        false
-    }
+
+    return mutedInDatabase
 }
 
 internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> Unit) {
-    if (isMutedInDatabase(testCase)) {
-        return {
-            System.err.println(mutedMessage(testCase))
-        }
-    }
+    val testClass = testCase.javaClass
+    val methodKey = testCase.name
 
-    val mutedTest = getMutedTest(testCase.javaClass, testCase.name)
-    val testKey = testKey(testCase)
-    if (mutedTest != null && !mutedTest.hasFailFile) {
+    val mutedTest = getMutedTest(testClass, methodKey)
+    val testKey = testKey(testClass, methodKey)
+
+    if (isMutedInDatabase(testClass, methodKey)) {
+        return {
+            System.err.println(mutedMessage(testClass, methodKey))
+        }
+    } else if (mutedTest != null && !mutedTest.hasFailFile) {
         return {
             invertMutedTestResultWithLog(f, testKey)
         }
@@ -95,6 +91,8 @@ class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
             }
         }
     }
+
+    private fun parametrizedMethodKey(child: FrameworkMethod, parametersName: String) = "${child.method.name}$parametersName"
 }
 
 private fun invertMutedTestResultWithLog(f: () -> Unit, testKey: String) {
@@ -111,8 +109,6 @@ private fun invertMutedTestResultWithLog(f: () -> Unit, testKey: String) {
         throw Exception("Muted non-flaky test $testKey finished successfully. Please remove it from csv file")
     }
 }
-
-private fun parametrizedMethodKey(child: FrameworkMethod, parametersName: String) = "${child.method.name}$parametersName"
 
 fun TestCase.runTest(test: () -> Unit) {
     wrapWithMuteInDatabase(this, test).invoke()
