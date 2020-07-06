@@ -38,6 +38,22 @@ fun AutoMute.muteTest(testKey: String) {
     file.writeText(newMuted.joinToString("\n"))
 }
 
+internal fun wrapWithAutoMute(f: () -> Unit, testKey: String): () -> Unit {
+    val doAutoMute = DO_AUTO_MUTE
+    if (doAutoMute != null) {
+        return {
+            try {
+                f()
+            } catch (e: Throwable) {
+                doAutoMute.muteTest(testKey)
+                throw e
+            }
+        }
+    } else {
+        return f
+    }
+}
+
 internal inline fun RunNotifier.withAutoMuteListener(
     testKey: String,
     crossinline run: () -> Unit,

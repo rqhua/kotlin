@@ -42,7 +42,7 @@ private fun isMutedInDatabaseWithLog(testClass: Class<*>, methodKey: String): Bo
     }
 }
 
-internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> Unit)? {
+internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> Unit) {
     if (isMutedInDatabase(testCase)) {
         return {
             System.err.println(mutedMessage(testCase))
@@ -50,21 +50,13 @@ internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> U
     }
 
     val mutedTest = getMutedTest(testCase.javaClass, testCase.name)
+    val testKey = testKey(testCase)
     if (mutedTest != null && !mutedTest.hasFailFile) {
         return {
-            val testKey = testKey(testCase)
             invertMutedTestResultWithLog(f, testKey)
         }
     } else {
-        val doAutoMute = DO_AUTO_MUTE ?: return null
-        return {
-            try {
-                f()
-            } catch (e: Throwable) {
-                doAutoMute.muteTest(testKey(testCase))
-                throw e
-            }
-        }
+        return wrapWithAutoMute(f, testKey)
     }
 }
 
@@ -128,7 +120,7 @@ private fun isIgnoredInDatabaseWithLog(child: FrameworkMethod, parametersName: S
 }
 
 fun TestCase.runTest(test: () -> Unit) {
-    (wrapWithMuteInDatabase(this, test) ?: test).invoke()
+    wrapWithMuteInDatabase(this, test).invoke()
 }
 
 annotation class WithMutedInDatabaseRunTest
