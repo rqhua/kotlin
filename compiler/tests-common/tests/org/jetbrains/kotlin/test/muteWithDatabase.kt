@@ -38,10 +38,6 @@ private fun isMutedInDatabaseWithLog(testClass: Class<*>, methodKey: String): Bo
     }
 }
 
-fun getMutedTest(testCase: TestCase): MutedTest? {
-    return getMutedTest(testCase.javaClass, testCase.name)
-}
-
 internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> Unit)? {
     if (isMutedInDatabase(testCase)) {
         return {
@@ -49,7 +45,7 @@ internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> U
         }
     }
 
-    val mutedTest = getMutedTest(testCase)
+    val mutedTest = getMutedTest(testCase.javaClass, testCase.name)
     if (mutedTest != null && !mutedTest.hasFailFile) {
         return {
             val testKey = testKey(testCase)
