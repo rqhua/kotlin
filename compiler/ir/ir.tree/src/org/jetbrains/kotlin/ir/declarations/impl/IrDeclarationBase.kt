@@ -65,9 +65,6 @@ abstract class IrDeclarationBase<T : DeclarationCarrier<T>>(
             }
         }
 
-    override val metadata: MetadataSource?
-        get() = null
-
     override fun ensureLowered() {
         if (stageController.currentStage > loweredUpTo) {
             stageController.lazyLower(this)
