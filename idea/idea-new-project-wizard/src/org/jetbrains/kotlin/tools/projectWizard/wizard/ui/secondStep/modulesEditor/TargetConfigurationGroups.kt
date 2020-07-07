@@ -61,7 +61,8 @@ object TargetConfigurationGroups {
             listOf(
                 RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosArm32),
                 RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosArm64),
-                RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosX64)
+                RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosX64),
+                RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios)
             )
         )
 
