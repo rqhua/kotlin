@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryUtil
@@ -149,7 +150,12 @@ class KotlinDebuggerCaches(project: Project) {
             val cachedValue = classNamesCache[psiElement]
             if (cachedValue != null) return cachedValue
 
+            val start = System.currentTimeMillis()
+            val test = runReadAction { psiElement?.text ?: "" }
+            println("Started to calc ${test} .")
+
             val computedClassNames = create(psiElement)
+            println("takes ${System.currentTimeMillis() - start} ms. And got: ${computedClassNames.classNames.size} ${computedClassNames.classNames.joinToString { it }}")
 
             if (computedClassNames.shouldBeCached) {
                 classNamesCache[psiElement] = computedClassNames.classNames
