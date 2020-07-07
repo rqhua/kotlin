@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectPath
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
-import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import java.nio.file.Path
 
 class KotlinPlugin(context: Context) : Plugin(context) {
@@ -109,14 +108,12 @@ class KotlinPlugin(context: Context) : Plugin(context) {
     val createSourcesetDirectories by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
         runAfter(KotlinPlugin::createModules)
         withAction {
-            fun Path.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator) = with(service<FileSystemWizardService>()) {
-                createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.kotlinDirectoryName) andThen
-                        createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.resourcesDirectoryName)
-            }
-
             forEachModule { moduleIR ->
                 moduleIR.sourcesets.mapSequenceIgnore { sourcesetIR ->
-                    sourcesetIR.path.createKotlinAndResourceDirectories(moduleIR.originalModule.configurator)
+                    val kotlinDir = moduleIR.originalModule.configurator.kotlinDirectoryName
+                    with(service<FileSystemWizardService>()) {
+                        createDirectory(sourcesetIR.path / kotlinDir)
+                    }
                 }
             }
         }
