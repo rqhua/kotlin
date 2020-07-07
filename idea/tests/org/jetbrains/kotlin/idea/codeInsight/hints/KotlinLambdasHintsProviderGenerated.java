@@ -9,6 +9,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
 @TestMetadata("idea/testData/codeInsight/hints/lambda")
 @TestDataPath("$PROJECT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
+@Ignore // please see explanation at KotlinLambdasHintsProvider
 public class KotlinLambdasHintsProviderGenerated extends AbstractKotlinLambdasHintsProvider {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

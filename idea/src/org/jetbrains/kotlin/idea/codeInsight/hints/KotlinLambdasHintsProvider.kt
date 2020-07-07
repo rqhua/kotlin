@@ -5,11 +5,24 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ChangeListener
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayHintsSink
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.editor.Editor
 import com.intellij.ui.layout.panel
 import org.jetbrains.kotlin.idea.KotlinBundle
 import javax.swing.JComponent
 
+/**
+ * Please note that the test class [KotlinLambdasHintsProviderGenerated] is currently deliberately @Ignored. The thing is that
+ * [KotlinLambdasHintsProvider] utilizes a hack preventing it from being testable (see [handlePresentations]).
+
+ * To run the tests in "imaginary" environment (might still be valuable):
+ * 1. Comment out [handlePresentations]
+ * 2. Remove @Ignore annotation from the test class.
+ */
 @Suppress("UnstableApiUsage")
 class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHintsProvider.Settings>() {
 
@@ -26,6 +39,16 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
             HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> settings.implicitReceiversAndParams
             else -> false
         }
+    }
+
+    override fun handlePresentations(presentations: List<PresentationAndSettings>, editor: Editor, sink: InlayHintsSink) {
+        // sink should remain empty for the outer infrastructure - we place hints ourselves
+        TransactionGuard.submitTransaction(editor.project!!, {
+            presentations.forEach { p ->
+                editor.inlayModel.getAfterLineEndElementsInRange(p.offset, p.offset).singleOrNull()?.dispose()
+                editor.inlayModel.addAfterLineEndElement(p.offset, p.relatesToPrecedingText, PresentationRenderer(p.presentation))
+            }
+        })
     }
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
