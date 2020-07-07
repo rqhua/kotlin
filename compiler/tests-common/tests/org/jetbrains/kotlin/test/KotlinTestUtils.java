@@ -766,10 +766,12 @@ public class KotlinTestUtils {
                 }
                 return null;
             });
-            wrapWithMuteInDatabase.invoke();
-        } else {
-            MuteWithFileKt.testWithMuteInFile(test, testCase).invoke(testDataFilePath);
+            if (wrapWithMuteInDatabase != null) {
+                wrapWithMuteInDatabase.invoke();
+                return;
+            }
         }
+        MuteWithFileKt.testWithMuteInFile(test, testCase).invoke(testDataFilePath);
     }
 
     private static boolean isRunTestOverridden(TestCase testCase) {

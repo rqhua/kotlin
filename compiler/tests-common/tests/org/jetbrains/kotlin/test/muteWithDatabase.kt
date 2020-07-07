@@ -40,7 +40,7 @@ private fun isPresentedInDatabaseWithoutFailMarker(mutedTest: MutedTest?): Boole
     return mutedTest != null && !mutedTest.hasFailFile
 }
 
-internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> Unit) {
+internal fun wrapWithMuteInDatabase(testCase: TestCase, f: () -> Unit): (() -> Unit)? {
     val testClass = testCase.javaClass
     val methodKey = testCase.name
 
@@ -115,7 +115,7 @@ private fun invertMutedTestResultWithLog(f: () -> Unit, testKey: String) {
 }
 
 fun TestCase.runTest(test: () -> Unit) {
-    wrapWithMuteInDatabase(this, test).invoke()
+    (wrapWithMuteInDatabase(this, test) ?: test).invoke()
 }
 
 annotation class WithMutedInDatabaseRunTest

@@ -38,7 +38,7 @@ fun AutoMute.muteTest(testKey: String) {
     file.writeText(newMuted.joinToString("\n"))
 }
 
-internal fun wrapWithAutoMute(f: () -> Unit, testKey: String): () -> Unit {
+internal fun wrapWithAutoMute(f: () -> Unit, testKey: String): (() -> Unit)? {
     val doAutoMute = DO_AUTO_MUTE
     if (doAutoMute != null) {
         return {
@@ -50,7 +50,7 @@ internal fun wrapWithAutoMute(f: () -> Unit, testKey: String): () -> Unit {
             }
         }
     } else {
-        return f
+        return null
     }
 }
 
