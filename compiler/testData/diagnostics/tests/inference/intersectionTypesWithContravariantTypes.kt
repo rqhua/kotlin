@@ -1,13 +1,14 @@
-// !DIAGNOSTICS: -UNUSED_PARAMETER -UNUSED_EXPRESSION
+// !LANGUAGE: +NewInference
+// !DIAGNOSTICS: -UNUSED_PARAMETER
 
-abstract class Foo<T>
+class Inv<T>(val x: T)
+class In<in R>
 
-abstract class Bar<T> : Foo<T>(), Comparable<Bar<T>>
+fun <K> foo(x: K, i: In<K>) {}
+//fun <V> foo(x: Inv<V>, i: In<V>) {}
 
-fun <T : Comparable<T>, S : T> greater(x: Bar<in S>, t: T): Int = 0
-fun <T : Comparable<T>, S : T> greater(x: Bar<in S>, other: Foo<T>): String = ""
+fun <S> materializeIn(s: S): In<S> = TODO()
 
-fun test(b: Bar<Long>) {
-    val result = greater(b, b)
-    <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.String")!>result<!>
+fun test(i: Inv<Int>, l: Int) {
+    foo(i, materializeIn(l))
 }
