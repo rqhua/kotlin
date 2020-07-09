@@ -28,16 +28,12 @@ dependencies {
 
     testCompile(projectTests(":idea"))
 
-    testRuntime(project(":allopen-ide-plugin")) { isTransitive = false }
-    testRuntime(project(":kotlin-allopen-compiler-plugin"))
-    testRuntime(project(":noarg-ide-plugin")) { isTransitive = false }
-    testRuntime(project(":kotlin-noarg-compiler-plugin"))
-    testRuntime(project(":plugins:annotation-based-compiler-plugins-ide-support")) { isTransitive = false }
+    testRuntime(project(":allopen-ide-plugin"))
+    testRuntime(project(":noarg-ide-plugin"))
     testRuntime(project(":kotlin-scripting-idea")) { isTransitive = false }
     testRuntime(project(":kotlin-scripting-compiler-impl"))
-    testRuntime(project(":sam-with-receiver-ide-plugin")) { isTransitive = false }
-    testRuntime(project(":kotlinx-serialization-compiler-plugin"))
-    testRuntime(project(":kotlinx-serialization-ide-plugin")) { isTransitive = false }
+    testRuntime(project(":sam-with-receiver-ide-plugin"))
+    testRuntime(project(":kotlinx-serialization-ide-plugin"))
 
     testRuntime(toolsJar())
 
