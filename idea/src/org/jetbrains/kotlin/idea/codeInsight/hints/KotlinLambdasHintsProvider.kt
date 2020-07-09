@@ -9,11 +9,9 @@ import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
-import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.layout.panel
-import com.sun.glass.ui.Application
 import org.jetbrains.kotlin.idea.KotlinBundle
 import javax.swing.JComponent
 
