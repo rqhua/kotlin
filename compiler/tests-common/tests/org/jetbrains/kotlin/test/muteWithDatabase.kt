@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.test
 
 import junit.framework.TestCase
 import org.jetbrains.kotlin.test.mutes.*
+import org.junit.After
 import org.junit.internal.runners.statements.InvokeMethod
+import org.junit.internal.runners.statements.RunAfters
 import org.junit.runner.Runner
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunListener
@@ -93,6 +95,29 @@ class RunnerFactoryWithMuteInDatabase : ParametersRunnerFactory {
                         super.evaluate()
                     }
                 }
+            }
+
+            override fun withAfters(method: FrameworkMethod, target: Any?, statement: Statement): Statement {
+                val afters = testClass.getAnnotatedMethods(After::class.java)
+                if (afters.isEmpty())
+                    return statement
+                else
+                    return object : RunAfters(statement, afters, target) {
+                        override fun evaluate() {
+                            val mutedTest =
+                                getMutedTest(method.declaringClass, parametrizedMethodKey(method, name))
+                                    ?: getMutedTest(method.declaringClass, method.method.name)
+                            try {
+                                super.evaluate()
+                            } catch (e: Throwable) {
+                                if (mutedTest != null && !mutedTest.hasFailFile) {
+                                    println("EXCEPTION WAS THROWN AFTER MUTED TEST: ${e.message}")
+                                    return
+                                }
+                                throw e
+                            }
+                        }
+                    }
             }
         }
     }
