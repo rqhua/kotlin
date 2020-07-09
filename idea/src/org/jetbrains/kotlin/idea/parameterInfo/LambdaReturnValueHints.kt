@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@Suppress("UnstableApiUsage")
 fun provideLambdaReturnValueHints(expression: KtExpression): List<InlayInfo> {
     if (expression is KtWhenExpression || expression is KtBlockExpression) {
         return emptyList()
