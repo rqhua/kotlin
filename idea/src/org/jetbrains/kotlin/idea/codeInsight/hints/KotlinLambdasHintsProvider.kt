@@ -18,12 +18,19 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import javax.swing.JComponent
 
 /**
- * Please note that the test class [KotlinLambdasHintsProviderGenerated] is currently deliberately @Ignored. The thing is that
- * [KotlinLambdasHintsProvider] utilizes a hack preventing it from being testable (see [handlePresentations]).
+ * Please note that the executable test class is currently not generated. The thing is that [KotlinLambdasHintsProvider] utilizes a hack
+ * preventing it from being testable (see [handlePresentations]). Nevertheless [AbstractKotlinLambdasHintsProvider] and corresponding
+ * [testData][idea/testData/codeInsight/hints/lambda] exist.
 
  * To run the tests in "imaginary" environment (might still be valuable):
  * 1. Comment out [handlePresentations]
- * 2. Remove @Ignore annotation from the test class.
+ * 2. Add the following code snippet next to the similar ones at [GenerateTests.kt]:
+ *   ```
+ *   testClass<AbstractKotlinLambdasHintsProvider> {
+ *      model("codeInsight/hints/lambda")
+ *   }
+ *  ```
+ *  3. Run "Generate All Tests". You're expected to get `KotlinLambdasHintsProviderGenerated` class.
  */
 @Suppress("UnstableApiUsage")
 class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHintsProvider.Settings>() {

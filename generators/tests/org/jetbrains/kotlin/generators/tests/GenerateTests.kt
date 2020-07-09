@@ -881,10 +881,6 @@ fun main(args: Array<String>) {
                 model("codeInsight/codeVision")
             }
 
-            testClass<AbstractKotlinLambdasHintsProvider> {
-                model("codeInsight/hints/lambda")
-            }
-
             testClass<AbstractKotlinReferenceTypeHintsProviderTest> {
                 model("codeInsight/hints/types")
             }
