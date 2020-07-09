@@ -45,7 +45,8 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                 if (!isElementSupported(resolved, settings)) return true
 
                 val presentations = resolved.provideHints(element).mapNotNull { info -> convert(info, editor.project) }
-                handlePresentations(presentations, editor, sink)
+                if (presentations.isNotEmpty())
+                    handlePresentations(presentations, editor, sink)
                 return true
             }
 

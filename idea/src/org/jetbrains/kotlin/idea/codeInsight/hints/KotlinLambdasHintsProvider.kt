@@ -10,8 +10,10 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.layout.panel
+import com.sun.glass.ui.Application
 import org.jetbrains.kotlin.idea.KotlinBundle
 import javax.swing.JComponent
 
@@ -43,12 +45,12 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
 
     override fun handlePresentations(presentations: List<PresentationAndSettings>, editor: Editor, sink: InlayHintsSink) {
         // sink should remain empty for the outer infrastructure - we place hints ourselves
-        TransactionGuard.submitTransaction(editor.project!!, {
+        invokeLater {
             presentations.forEach { p ->
                 editor.inlayModel.getAfterLineEndElementsInRange(p.offset, p.offset).singleOrNull()?.dispose()
                 editor.inlayModel.addAfterLineEndElement(p.offset, p.relatesToPrecedingText, PresentationRenderer(p.presentation))
             }
-        })
+        }
     }
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
