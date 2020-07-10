@@ -829,7 +829,7 @@ tasks {
 
     register("kmmTest", AggregateTest::class) {
         dependsOn(
-            ":idea:idea-gradle:test"
+            ":idea:idea-gradle:test",
             ":idea:test",
             ":compiler:test",
             ":js:js.tests:test"
