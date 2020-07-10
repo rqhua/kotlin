@@ -13,13 +13,13 @@ import org.junit.Test
 class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = newMppImportTestMinVersionForMaster)
+    @PluginTargetVersions(pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
     fun testMultiplatformLibrary() {
         importAndCheckHighlighting()
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = newMppImportTestMinVersionForMaster)
+    @PluginTargetVersions(pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
     fun testUnresolvedInMultiplatformLibrary() {
         importAndCheckHighlighting(false, false)
     }

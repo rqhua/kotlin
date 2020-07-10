@@ -26,7 +26,7 @@ class KaptImportingTest : MultiplePluginVersionGradleImportingTestCase() {
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testModulePerSourceSet() {
         // Disable testing import module per source set test in Android Studio as this mode is not supported in Android Studio
         if (isAndroidStudio()) {
@@ -59,7 +59,7 @@ class KaptImportingTest : MultiplePluginVersionGradleImportingTestCase() {
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testModulePerSourceSetDisabled() {
         configureByFiles()
         importProject(false)

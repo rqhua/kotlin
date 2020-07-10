@@ -31,8 +31,6 @@ import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
-const val mppImportTestMinVersionForMaster = "5.3+"
-
 class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTestCase() {
 
     private fun legacyMode() = gradleVersion.split(".")[0].toInt() < 4
@@ -56,7 +54,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testPlatformToCommonDependency() {
         val files = configureByFiles()
         importProject()
@@ -77,7 +75,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testPlatformToCommonExpectedByDependency() {
         configureByFiles()
         importProject()
@@ -92,7 +90,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testPlatformToCommonDependencyRoot() {
         configureByFiles()
         importProject()
@@ -103,7 +101,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testMultiProject() {
         configureByFiles()
         importProject()
@@ -118,7 +116,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testDependenciesReachableViaImpl() {
         configureByFiles()
         importProject()
@@ -135,7 +133,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testTransitiveImplement() {
         configureByFiles()
 
@@ -184,7 +182,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testTransitiveImplementWithNonDefaultConfig() {
         configureByFiles()
 
@@ -229,7 +227,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testTransitiveImplementWithAndroid() {
         configureByFiles()
 
@@ -260,7 +258,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun simpleAndroidAppWithCommonModule() {
         configureByFiles()
 
@@ -289,7 +287,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testJsTestOutputFile() {
         configureByFiles()
 
@@ -306,7 +304,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testJsProductionOutputFile() {
         configureByFiles()
         importProject()
@@ -322,7 +320,7 @@ class MultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTe
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testJsTestOutputFileInProjectWithAndroid() {
         configureByFiles()
         createProjectSubFile(

@@ -18,6 +18,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+const val hmppGradlePluginVersion = "1.3.50+"
+
 class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Before
@@ -36,7 +38,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.50+", gradleVersionForLatestPlugin = newMppImportTestMinVersionForMaster)
+    @PluginTargetVersions(pluginVersion = hmppGradlePluginVersion, gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
     fun testImportHMPPFlag() {
         configureByFiles()
         importProject()
@@ -51,7 +53,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.50+", gradleVersionForLatestPlugin = newMppImportTestMinVersionForMaster)
+    @PluginTargetVersions(pluginVersion = hmppGradlePluginVersion, gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
     fun testImportIntermediateModules() {
         configureByFiles()
         importProject()
@@ -225,7 +227,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.50+", gradleVersionForLatestPlugin = newMppImportTestMinVersionForMaster)
+    @PluginTargetVersions(pluginVersion = hmppGradlePluginVersion, gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
     fun testJvmWithJavaOnHMPP() {
         configureByFiles()
         importProject()

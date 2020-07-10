@@ -14,7 +14,7 @@ import org.junit.Test
 class PackagePrefixImportingTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.0+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions(gradleVersionForLatestPlugin = legacyMppImportTestMinVersionForMaster)
     fun testPackagePrefixNonMPP() {
         configureByFiles()
         importProject()

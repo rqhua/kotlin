@@ -18,7 +18,7 @@ import java.io.File
 class NewMultiplatformKaptProjectImportingTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = newMppImportTestMinVersionForMaster)
+    @PluginTargetVersions(pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
     fun testKaptPaths() {
         configureByFiles()
         importProject()
@@ -71,7 +71,7 @@ class NewMultiplatformKaptProjectImportingTest : MultiplePluginVersionGradleImpo
     }
 
     @Test
-    @PluginTargetVersions(gradleVersion = "4.0+", pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = newMppImportTestMinVersionForMaster)
+    @PluginTargetVersions(pluginVersion = "1.3.40+", gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
     fun testRuntimeClasspath() {
         configureByFiles()
 

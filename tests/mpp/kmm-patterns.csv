@@ -16,8 +16,3 @@ com.jetbrains.mpp.versions*, include
 *MultiplatformGradleIT*, include
 *KotlinProjectIT*, include
 *NewMultiplatformIT*, include
-*ImportAndCheckHighlighting*, include
-*ImportAndCheckNavigation*, include
-*MultiplatformProjectImportingTest*, include
-*PackagePrefixImportingTest*, include
-*KaptImportingTest*, include
