@@ -37,7 +37,7 @@ object FirExposedVisibilityChecker : FirMemberDeclarationChecker() {
     }
 
     private fun checkSupertypes(declaration: FirRegularClass, reporter: DiagnosticReporter) {
-        val classVisibility = declaration.firEffectiveVisibility(declaration.session)
+        val classVisibility = declaration.effectiveVisibility
         val supertypes = declaration.superTypeRefs
         val isInterface = declaration.classKind == ClassKind.INTERFACE
         for (supertypeRef in supertypes) {
@@ -61,7 +61,7 @@ object FirExposedVisibilityChecker : FirMemberDeclarationChecker() {
     }
 
     private fun checkParameterBounds(declaration: FirRegularClass, reporter: DiagnosticReporter) {
-        val classVisibility = declaration.firEffectiveVisibility(declaration.session)
+        val classVisibility = declaration.effectiveVisibility
         for (parameter in declaration.typeParameters) {
             for (bound in parameter.symbol.fir.bounds) {
                 val restricting = bound.coneType.leastPermissiveDescriptor(declaration.session, classVisibility)
@@ -128,7 +128,7 @@ object FirExposedVisibilityChecker : FirMemberDeclarationChecker() {
     }
 
     private fun checkProperty(declaration: FirProperty, reporter: DiagnosticReporter) {
-        val propertyVisibility = declaration.firEffectiveVisibility(declaration.session)
+        val propertyVisibility = declaration.effectiveVisibility
         val restricting =
             declaration.returnTypeRef.coneTypeSafe<ConeKotlinType>()?.leastPermissiveDescriptor(declaration.session, propertyVisibility)
         if (restricting != null) {
@@ -149,7 +149,7 @@ object FirExposedVisibilityChecker : FirMemberDeclarationChecker() {
     ) {
         if (typeRef == null || memberDeclaration == null) return
         val receiverParameterType = typeRef.coneType
-        val memberVisibility = memberDeclaration.firEffectiveVisibility(memberDeclaration.session)
+        val memberVisibility = memberDeclaration.effectiveVisibility
         val restricting = receiverParameterType.leastPermissiveDescriptor(memberDeclaration.session, memberVisibility)
         if (restricting != null) {
             reporter.reportExposure(
