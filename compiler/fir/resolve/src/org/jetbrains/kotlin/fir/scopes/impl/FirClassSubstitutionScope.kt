@@ -69,7 +69,7 @@ class FirClassSubstitutionScope(
         processor: (FirFunctionSymbol<*>, Int) -> ProcessorAction
     ): ProcessorAction {
         val unwrapped = functionSymbol.overriddenSymbol as FirFunctionSymbol<*>? ?: functionSymbol
-        val overriddenDepth = if (unwrapped.callableId == functionSymbol.callableId) 0 else 1
+        val overriddenDepth = if (unwrapped != functionSymbol) 1 else 0
         if (!processor(unwrapped, overriddenDepth)) {
             return ProcessorAction.STOP
         }
