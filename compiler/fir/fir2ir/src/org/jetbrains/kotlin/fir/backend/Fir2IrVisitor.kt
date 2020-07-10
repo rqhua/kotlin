@@ -110,9 +110,12 @@ class Fir2IrVisitor(
         val correspondingClass = irEnumEntry.correspondingClass ?: return irEnumEntry
         declarationStorage.enterScope(irEnumEntry)
         classifierStorage.putEnumEntryClassInScope(enumEntry, correspondingClass)
-        converter.processAnonymousObjectMembers(enumEntry.initializer as FirAnonymousObject, correspondingClass)
+        val anonymousObject = enumEntry.initializer as FirAnonymousObject
+        converter.processAnonymousObjectMembers(anonymousObject, correspondingClass)
         conversionScope.withParent(correspondingClass) {
-            memberGenerator.convertClassContent(correspondingClass, enumEntry.initializer as FirAnonymousObject)
+            conversionScope.withContainingFirClass(anonymousObject) {
+                memberGenerator.convertClassContent(correspondingClass, anonymousObject)
+            }
             val constructor = correspondingClass.constructors.first()
             irEnumEntry.initializerExpression = IrExpressionBodyImpl(
                 IrEnumConstructorCallImpl(
@@ -142,7 +145,9 @@ class Fir2IrVisitor(
         }
         val irClass = classifierStorage.getCachedIrClass(regularClass)!!
         return conversionScope.withParent(irClass) {
-            memberGenerator.convertClassContent(irClass, regularClass)
+            conversionScope.withContainingFirClass(regularClass) {
+                memberGenerator.convertClassContent(irClass, regularClass)
+            }
         }
     }
 
@@ -153,7 +158,9 @@ class Fir2IrVisitor(
             ?: classifierStorage.createIrAnonymousObject(anonymousObject, irParent = irParent)
         converter.processAnonymousObjectMembers(anonymousObject, irAnonymousObject)
         conversionScope.withParent(irAnonymousObject) {
-            memberGenerator.convertClassContent(irAnonymousObject, anonymousObject)
+            conversionScope.withContainingFirClass(anonymousObject) {
+                memberGenerator.convertClassContent(irAnonymousObject, anonymousObject)
+            }
         }
         val anonymousClassType = irAnonymousObject.thisReceiver!!.type
         return anonymousObject.convertWithOffsets { startOffset, endOffset ->
@@ -179,7 +186,7 @@ class Fir2IrVisitor(
     override fun visitConstructor(constructor: FirConstructor, data: Any?): IrElement {
         val irConstructor = declarationStorage.getCachedIrConstructor(constructor)!!
         return conversionScope.withFunction(irConstructor) {
-            memberGenerator.convertFunctionContent(irConstructor, constructor)
+            memberGenerator.convertFunctionContent(irConstructor, constructor, containingClass = conversionScope.containerFirClass())
         }
     }
 
@@ -193,21 +200,26 @@ class Fir2IrVisitor(
 
     override fun visitSimpleFunction(simpleFunction: FirSimpleFunction, data: Any?): IrElement {
         val irFunction = if (simpleFunction.visibility == Visibilities.LOCAL) {
-            val irParent = conversionScope.parent()
-            declarationStorage.createIrFunction(simpleFunction, irParent)
+            declarationStorage.createIrFunction(
+                simpleFunction, irParent = conversionScope.parent()
+            )
         } else {
             declarationStorage.getCachedIrFunction(simpleFunction)!!
         }
         return conversionScope.withFunction(irFunction) {
-            memberGenerator.convertFunctionContent(irFunction, simpleFunction)
+            memberGenerator.convertFunctionContent(
+                irFunction, simpleFunction, containingClass = conversionScope.containerFirClass()
+            )
         }
     }
 
     override fun visitAnonymousFunction(anonymousFunction: FirAnonymousFunction, data: Any?): IrElement {
         return anonymousFunction.convertWithOffsets { startOffset, endOffset ->
-            val irFunction = declarationStorage.createIrFunction(anonymousFunction, conversionScope.parent())
+            val irFunction = declarationStorage.createIrFunction(
+                anonymousFunction, irParent = conversionScope.parent()
+            )
             conversionScope.withFunction(irFunction) {
-                memberGenerator.convertFunctionContent(irFunction, anonymousFunction)
+                memberGenerator.convertFunctionContent(irFunction, anonymousFunction, containingClass = null)
             }
 
             val type = anonymousFunction.typeRef.toIrType()
